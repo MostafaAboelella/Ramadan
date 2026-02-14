@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>رمضان كريم - عيلتي</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Cairo', sans-serif;
+            /* خلفية ليالي رمضان الفخمة */
+            background: radial-gradient(circle at center, #2b1055 0%, #0d0414 100%);
+            color: #fff;
+            overflow: hidden; 
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        /* حبل الزينة المعلق */
+        .garland {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            display: flex;
+            justify-content: space-around;
+            font-size: 2.5rem;
+            padding-top: 10px;
+            z-index: 5;
+            /* حركة مرجحة للزينة */
+            animation: swing 3s ease-in-out infinite alternate;
+            transform-origin: top;
+        }
+        .garland span {
+            text-shadow: 0 0 15px #ffd700;
+        }
+        @keyframes swing {
+            0% { transform: rotate(-2deg); }
+            100% { transform: rotate(2deg); }
+        }
+
+        /* تصميم الكروت (شاشة الدخول والتهنئة) */
+        .card {
+            background: rgba(20, 10, 35, 0.85);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.4), inset 0 0 15px rgba(255, 215, 0, 0.2);
+            border: 2px solid #ffd700;
+            z-index: 10;
+            max-width: 500px;
+            width: 90%;
+            backdrop-filter: blur(5px);
+        }
+
+        h1, h2 { 
+            color: #ffd700; 
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+            margin-bottom: 20px;
+        }
+        
+        p { 
+            font-size: 1.4em; 
+            line-height: 1.6; 
+        }
+
+        input {
+            padding: 12px;
+            font-size: 18px;
+            border-radius: 8px;
+            border: 2px solid #ffd700;
+            background: rgba(255, 255, 255, 0.9);
+            margin-bottom: 20px;
+            text-align: center;
+            font-family: 'Cairo', sans-serif;
+            width: 80%;
+            outline: none;
+        }
+
+        input:focus {
+            box-shadow: 0 0 15px #ffd700;
+        }
+
+        button {
+            padding: 12px 40px;
+            font-size: 20px;
+            background: linear-gradient(45deg, #ffd700, #ffaa00);
+            color: #000;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 900;
+            font-family: 'Cairo', sans-serif;
+            transition: 0.3s;
+            box-shadow: 0 5px 15px rgba(255, 215, 0, 0.4);
+        }
+
+        button:hover { 
+            transform: scale(1.05) translateY(-3px); 
+            box-shadow: 0 8px 20px rgba(255, 215, 0, 0.6);
+        }
+
+        /* شاشة التهنئة */
+        #greeting-screen {
+            display: none;
+        }
+
+        #person-image {
+            width: 160px;
+            height: 160px;
+            border-radius: 50%;
+            border: 4px solid #ffd700;
+            box-shadow: 0 0 20px #ffd700;
+            margin-bottom: 20px;
+            object-fit: cover;
+        }
+
+        /* الفوانيس اللي بتنزل من فوق */
+        .fanoos {
+            position: absolute;
+            top: -100px;
+            animation: fall linear infinite;
+            z-index: 1;
+            opacity: 0.7;
+            filter: drop-shadow(0 0 10px #ffd700);
+        }
+
+        @keyframes fall {
+            to { transform: translateY(110vh) rotate(15deg); }
+        }
+    </style>
+</head>
+<body>
+
+    <audio id="ramadan-song" src="ramadan.mp3"></audio>
+
+    <div class="garland">
+        <span>🏮</span><span>⭐</span><span>🌙</span><span>🏮</span><span>⭐</span><span>🌙</span><span>🏮</span>
+    </div>
+
+    <div id="login-screen" class="card">
+        <h2>الموقع نور وربنا  🌙</h2>
+        <p>اكتب اسمك عشان تشوف رسالتك</p>
+        <input type="text" id="name-input" placeholder="اكتب اسمك هنا..."><br>
+        <button onclick="checkName()"> شوف رسالتك</button>
+        <p id="error-msg" style="color: #ff4d4d; font-weight: bold; display: none; margin-top: 15px; text-shadow: 0 0 5px #000;"></p>
+    </div>
+
+    <div id="greeting-screen" class="card">
+        <img id="person-image" src="default.jpg" alt="صورة">
+        <h1>رمضان كريم ✨</h1>
+        <p id="personal-message"></p>
+    </div>
+
+    <script>
+        // الأسماء والرسايل والصور
+        const familyData = {
+            "دينا": { message: "❤❤ كل سنة وانتي طيبة يا ام اسر ورمضان كريم عليكي، يا رب السنة دي تكون سنة خير وسعادة عليكي.❤❤", image: "dina.jpg"  },
+            "حسن": { message: "❤❤حبيب قلبي يا عم حسن، كل سنة وانت طيب وبخير، ورمضان يجمعنا دايماً على خير.❤❤", image: "hassan.jpg" },
+            "جيمي": { message: "❤❤حبيب قلبي جيمي، كل سنة وانت طيب و تفضل قارفني ف عيشتي ع طول كده يعم .❤❤", image: "jimmy.jpg" },
+            "احمد": { message: "❤❤كل سنة وانت طيب يا حجوج، ربنا يبارك في عمرك ويخليك لينا ودايماً منور بيتنا.❤❤", image: "ahmed.jpg" },
+            "وفاء": { message: "❤❤ كل سنة وانتي طيبة يا امي، رمضان كريم عليكي وربنا يخليكي لينا يحبيبتي وربنا يقدرني و ابسطك.❤❤", image: "wafaa.jpg" },
+            "مانه": { message: "❤❤كل سنة وانت طيب اخويا المانه ، رمضانك مبارك ومليان فرحة.❤❤", image: "mana.jpg" },
+            "نشوى": { message: " ❤❤كل سنة وانتي طيبة يا احلى خالتو،  رمضان كريم وربنا يبارك في عمرك ربنا يعيده عليكي بالخير واليمن والبركات.❤❤" },
+            "سامح": { message: "❤❤اخويا الي بحبه يعم كل سنه ونت طيب و بيخير يحبيب قلبي و ان شاء الله اشوفك احسن الناس", image: "sameh.jpg" },
+            "محمد": { message: "❤❤اخويا الي بحبه يعم كل سنه ونت طيب و بيخير يحبيب قلبي و ان شاء الله اشوفك احسن الناس", image: "mo.jpg" },
+            "مازن": { message: "❤❤اخويا الي بحبه يعم كل سنه ونت طيب و بيخير يحبيب قلبي و ان شاء الله اشوفك احسن الناس", image: "ma.jpg" },
+            "محمود": { message: "❤❤اخويا الي بحبه يعم كل سنه ونت طيب و بيخير يحبيب قلبي و ان شاء الله اشوفك احسن الناس", image: "mah.jpg" },
+            "يسر": { message: "❤❤اختي يويو العسليه كل سنه و انتي طيبه يحبيبت قلبي رمضان كريم عليكي يقلبي", image: "yoyo.jpg" },
+            "اسر": { message: "❤❤حبيب قلبي اسر، كل سنة وانت طيب و تفضل قارفني ف عيشتي ع طول كده يعم .❤❤", image: "asser.jpg" },
+            "اسماء": { message: " ❤❤كل سنة وانتي طيبة يا احلى خالتو،  رمضان كريم وربنا يبارك في عمرك ربنا يعيده عليكي بالخير واليمن والبركات.❤❤" }
+            
+        };
+
+        function checkName() {
+            let inputName = document.getElementById('name-input').value.trim();
+            let errorMsg = document.getElementById('error-msg');
+            
+            let isEnglish = /[a-zA-Z]/.test(inputName);
+
+            if (isEnglish) {
+                errorMsg.innerText = "اكتب بالعربي يعم الأجنبي! 😂";
+                errorMsg.style.display = 'block';
+            } 
+            else if (familyData[inputName]) {
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('greeting-screen').style.display = 'block';
+                
+                // هنا شيلنا السطر اللي كان بيطبع الاسم فوق
+                document.getElementById('personal-message').innerText = familyData[inputName].message;
+                
+                // لو في صورة مخصصة هيعرضها، لو مفيش مش هيغير حاجة
+                if(familyData[inputName].image) {
+                    document.getElementById('person-image').src = familyData[inputName].image;
+                }
+                
+                document.getElementById('ramadan-song').play();
+                
+                // تشغيل الألعاب النارية والفوانيس
+                fireworks();
+                startAnimations();
+            } 
+            else {
+                errorMsg.innerText = "الاسم ده مش في العيلة يا نصاب! 😂";
+                errorMsg.style.display = 'block';
+            }
+        }
+
+        // دالة الفراقيع (الألعاب النارية)
+        function fireworks() {
+            var duration = 10 * 1000;
+            var animationEnd = Date.now() + duration;
+            var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+
+            function randomInRange(min, max) {
+                return Math.random() * (max - min) + min;
+            }
+
+            var interval = setInterval(function() {
+                var timeLeft = animationEnd - Date.now();
+
+                if (timeLeft <= 0) {
+                    return clearInterval(interval);
+                }
+
+                var particleCount = 50 * (timeLeft / duration);
+                confetti(Object.assign({}, defaults, { particleCount,
+                    origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 }
+                }));
+                confetti(Object.assign({}, defaults, { particleCount,
+                    origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 }
+                }));
+            }, 250);
+        }
+
+        // دالة الفوانيس اللي بتنزل من فوق
+        function startAnimations() {
+            for (let i = 0; i < 15; i++) {
+                setTimeout(createFanoos, Math.random() * 3000); // عشان مينزلوش كلهم في نفس اللحظة
+            }
+        }
+
+        function createFanoos() {
+            let fanoos = document.createElement('img');
+            fanoos.src = 'fanoos.png'; 
+            fanoos.className = 'fanoos';
+            
+            let size = Math.random() * 80 + 60;
+            fanoos.style.width = size + 'px';
+            fanoos.style.left = Math.random() * 100 + 'vw';
+            fanoos.style.animationDuration = Math.random() * 4 + 4 + 's'; 
+            
+            document.body.appendChild(fanoos);
+        }
+    </script>
+</body>
+
+
+</html>
+
